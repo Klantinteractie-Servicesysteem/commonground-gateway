@@ -20,6 +20,7 @@ App\Entity\Attribute:
         type: string
         maxLength: 255
         required: true
+        # multiple: true
         entity: "@weekWeather"
     weekWeather_tuesday:
         name: tuesday
