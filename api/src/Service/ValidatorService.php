@@ -10,7 +10,7 @@ use Respect\Validation\Exceptions\NestedValidationException;
 use Respect\Validation\Rules;
 use Respect\Validation\Validator;
 
-class ValidaterService
+class ValidatorService
 {
     public function __construct(
         EntityManagerInterface $entityManager
@@ -40,7 +40,7 @@ class ValidaterService
             // Add rule for type
             $attribute->getType() !== null && $attributeValidator->AddRule($this->getAttTypeRule($attribute->getType()));
             // Add rules for valdiations
-            // $attribute->getValidations !== null && $attributeValidator = $this->addValidationRules($attribute, $attributeValidator);
+            $attribute->getValidations() !== null && $attributeValidator = $this->addValidationRules($attribute, $attributeValidator);
 
             $validator->AddRule(new Rules\Key($attribute->getName(), $attributeValidator));
         }
@@ -53,12 +53,16 @@ class ValidaterService
         $validations = $attribute->getValidations();
         foreach ($validations as $validation => $config) {
             switch ($validation) {
+                case 'multiple':
                 case 'multipleOf':
                     $attributeValidator->AddRule(new Rules\Multiple($config));
                 case 'maximum':
                 case 'exclusiveMaximum': // doet niks
                 case 'minimum':
                 case 'exclusiveMinimum': // doet niks
+                    if ($validations['minimum'] >= $validations['maximum']) {
+                        break;
+                    }
                     $attributeValidator->AddRule(new Rules\Between($validations['minimum'] ?? null, $validations['maximum'] ?? null));
                     break;
                 case 'minLength':
@@ -76,7 +80,7 @@ class ValidaterService
                     $attributeValidator->AddRule(new Rules\Length($validations['minProperties'] ?? null, $validations['maxProperties'] ?? null));
                 case 'minDate':
                 case 'maxDate':
-                    $attributeValidator->AddRule(new Rules\Length(new DateTime($validations['minDate'] ?? null) ?? null, new DateTime($validations['maxDate'] ?? null) ?? null));
+                    // $attributeValidator->AddRule(new Rules\Length(new DateTime($validations['minDate'] ?? null) ?? null, new DateTime($validations['maxDate'] ?? null) ?? null));
                     break;
                 case 'maxFileSize':
                 case 'fileType':
@@ -88,54 +92,54 @@ class ValidaterService
                 case 'forbidden':
                     $attributeValidator->AddRule(new Rules\Not(Validator::notEmpty()));
                     break;
-                // case 'conditionals':
-                //     /// here we go
-                //     foreach ($config as $con) {
-                //         // Lets check if the referenced value is present
-                //         /* @tdo this isnt array proof */
-                //         if ($conValue = $objectEntity->getValueByName($con['property'])->value) {
-                //             switch ($con['condition']) {
-                //                 case '==':
-                //                     if ($conValue == $con['value']) {
-                //                         $validator = $this->validateValue($objectEntity, $value, $con['validations'], $validator);
-                //                     }
-                //                     break;
-                //                 case '!=':
-                //                     if ($conValue != $con['value']) {
-                //                         $validator = $this->validateValue($objectEntity, $value, $con['validations'], $validator);
-                //                     }
-                //                     break;
-                //                 case '<=':
-                //                     if ($conValue <= $con['value']) {
-                //                         $validator = $this->validateValue($objectEntity, $value, $con['validations'], $validator);
-                //                     }
-                //                     break;
-                //                 case '>=':
-                //                     if ($conValue >= $con['value']) {
-                //                         $validator = $this->validateValue($objectEntity, $value, $con['validations'], $validator);
-                //                     }
-                //                     break;
-                //                 case '>':
-                //                     if ($conValue > $con['value']) {
-                //                         $validator = $this->validateValue($objectEntity, $value, $con['validations'], $validator);
-                //                     }
-                //                     break;
-                //                 case '<':
-                //                     if ($conValue < $con['value']) {
-                //                         $validator = $this->validateValue($objectEntity, $value, $con['validations'], $validator);
-                //                     }
-                //                     break;
-                //             }
-                //         }
-                //     }
-                //     break;
+                    // case 'conditionals':
+                    //     /// here we go
+                    //     foreach ($config as $con) {
+                    //         // Lets check if the referenced value is present
+                    //         /* @tdo this isnt array proof */
+                    //         if ($conValue = $objectEntity->getValueByName($con['property'])->value) {
+                    //             switch ($con['condition']) {
+                    //                 case '==':
+                    //                     if ($conValue == $con['value']) {
+                    //                         $validator = $this->validateValue($objectEntity, $value, $con['validations'], $validator);
+                    //                     }
+                    //                     break;
+                    //                 case '!=':
+                    //                     if ($conValue != $con['value']) {
+                    //                         $validator = $this->validateValue($objectEntity, $value, $con['validations'], $validator);
+                    //                     }
+                    //                     break;
+                    //                 case '<=':
+                    //                     if ($conValue <= $con['value']) {
+                    //                         $validator = $this->validateValue($objectEntity, $value, $con['validations'], $validator);
+                    //                     }
+                    //                     break;
+                    //                 case '>=':
+                    //                     if ($conValue >= $con['value']) {
+                    //                         $validator = $this->validateValue($objectEntity, $value, $con['validations'], $validator);
+                    //                     }
+                    //                     break;
+                    //                 case '>':
+                    //                     if ($conValue > $con['value']) {
+                    //                         $validator = $this->validateValue($objectEntity, $value, $con['validations'], $validator);
+                    //                     }
+                    //                     break;
+                    //                 case '<':
+                    //                     if ($conValue < $con['value']) {
+                    //                         $validator = $this->validateValue($objectEntity, $value, $con['validations'], $validator);
+                    //                     }
+                    //                     break;
+                    //             }
+                    //         }
+                    //     }
+                    //     break;
                 default:
                     // we should never end up here
                     //$objectEntity->addError($attribute->getName(),'Has an an unknown validation: [' . (string) $validation . '] set to'. (string) $config);
             }
         }
 
-        return $validator;
+        return $attributeValidator;
     }
 
     private function getAttTypeRule($type)
@@ -185,7 +189,7 @@ class ValidaterService
         foreach ($data as $key => $value) {
             $validator->key(
                 $key,
-            /** custom not allowed validator*/
+                /** custom not allowed validator*/
             );
         }
 
