@@ -6,6 +6,7 @@ use App\Entity\Handler;
 use App\Entity\ObjectEntity;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use App\Service\ValidatorService;
 
 class ObjectEntityService
 {
@@ -16,13 +17,13 @@ class ObjectEntityService
         RequestStack $requestStack,
         AuthorizationService $authorizationService,
         ApplicationService $applicationService,
-        ValidaterService $validaterService
+        ValidatorService $validatorService
     ) {
         $this->tokenStorage = $tokenStorage;
         $this->request = $requestStack->getCurrentRequest();
         $this->authorizationService = $authorizationService;
         $this->applicationService = $applicationService;
-        $this->validaterService = $validaterService;
+        $this->validatorService = $validatorService;
     }
 
     /**
@@ -82,7 +83,7 @@ class ObjectEntityService
                 break;
             case 'POST':
                 // validate
-                if ($validationErrors = $this->validaterService->validateData($data, $entity, $method ?? null)) {
+                if ($validationErrors = $this->validatorService->validateData($data, $entity, $method ?? null)) {
                     break;
                 }
 
@@ -97,7 +98,7 @@ class ObjectEntityService
                 // get object
 
                 // validate
-                if ($validationErrors = $this->validaterService->validateData($data, $entity, $method ?? null)) {
+                if ($validationErrors = $this->validatorService->validateData($data, $entity, $method ?? null)) {
                     break;
                 }
                 // put object
