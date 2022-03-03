@@ -2,7 +2,9 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Core\Annotation\ApiFilter;
 use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 use Ramsey\Uuid\UuidInterface;
@@ -28,6 +30,9 @@ use Symfony\Component\Validator\Constraints\Json;
  *  })
  * @ORM\Entity(repositoryClass="App\Repository\HandlerRepository")
  * @Gedmo\Loggable(logEntryClass="Conduction\CommonGroundBundle\Entity\ChangeLog")
+ * @ApiFilter(SearchFilter::class, properties={
+ *     "endpoint.id": "exact"
+ * })
  */
 class Handler
 {
@@ -78,12 +83,13 @@ class Handler
     /**
      * @var array The JSON conditions of this Handler.
      *
+     * @Assert\Json
      * @Assert\NotNull
      *
      * @Groups({"read", "write"})
-     * @ORM\Column(type="json")
+     * @ORM\Column(type="string", options={"default": "{}"})
      */
-    private array $conditions = [];
+    private string $conditions;
 
     /**
      * @var array|null The translations of this Handler.
@@ -222,12 +228,12 @@ class Handler
         return $this;
     }
 
-    public function getConditions(): ?array
+    public function getConditions(): ?string
     {
         return $this->conditions;
     }
 
-    public function setConditions(array $conditions): self
+    public function setConditions(string $conditions): self
     {
         $this->conditions = $conditions;
 

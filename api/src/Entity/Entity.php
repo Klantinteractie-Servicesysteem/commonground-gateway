@@ -247,6 +247,15 @@ class Entity
      */
     private Collection $handlers;
 
+    /**
+     * @var array|null The subscribers used for this entity.
+     *
+     * @MaxDepth(1)
+     * @Groups({"read", "write"})
+     * @ORM\OneToMany(targetEntity=Subscriber::class, mappedBy="entity")
+     */
+    private Collection $subscribers;
+
     public function __construct()
     {
         $this->attributes = new ArrayCollection();
@@ -256,6 +265,7 @@ class Entity
         $this->requestLogs = new ArrayCollection();
         $this->soap = new ArrayCollection();
         $this->handlers = new ArrayCollection();
+        $this->subscribers = new ArrayCollection();
     }
 
     public function export()
@@ -738,6 +748,36 @@ class Entity
             // set the owning side to null (unless already changed)
             if ($handler->getEntity() === $this) {
                 $handler->setEntity(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Subscriber[]
+     */
+    public function getSubscribers(): Collection
+    {
+        return $this->subscribers;
+    }
+
+    public function addSubscribers(Subscriber $subscriber): self
+    {
+        if (!$this->subscribers->contains($subscriber)) {
+            $this->subscribers[] = $subscriber;
+            $subscriber->setEntity($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSubscribers(Subscriber $subscriber): self
+    {
+        if ($this->subscribers->removeElement($subscriber)) {
+            // set the owning side to null (unless already changed)
+            if ($subscriber->getEntity() === $this) {
+                $subscriber->setEntity(null);
             }
         }
 

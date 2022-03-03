@@ -78,16 +78,17 @@ class Endpoint
      */
     private ?string $description = null;
 
-    /**
-     * @var string The type of this Endpoint.
-     *
-     * @Assert\NotNull
-     * @Assert\Choice({"gateway-endpoint", "entity-route", "entity-endpoint", "documentation-endpoint"})
-     *
-     * @Groups({"read", "write"})
-     * @ORM\Column(type="string")
-     */
-    private string $type;
+    // @TODO remove totally?
+    // /**
+    //  * @var string The type of this Endpoint.
+    //  *
+    //  * @Assert\NotNull
+    //  * @Assert\Choice({"gateway-endpoint", "entity-route", "entity-endpoint", "documentation-endpoint"})
+    //  *
+    //  * @Groups({"read", "write"})
+    //  * @ORM\Column(type="string")
+    //  */
+    // private string $type;
 
     /**
      * @var string The path of this Endpoint.
@@ -98,13 +99,6 @@ class Endpoint
      * @ORM\Column(type="string")
      */
     private string $path;
-
-    /**
-     * @Groups({"read", "write"})
-     * @MaxDepth(1)
-     * @ORM\ManyToOne(targetEntity=Application::class, inversedBy="endpoints")
-     */
-    private ?Application $application;
 
     /**
      * @MaxDepth(1)
@@ -131,10 +125,25 @@ class Endpoint
      */
     private Collection $handlers;
 
+    /**
+     * @Groups({"read", "write"})
+     * @MaxDepth(1)
+     * @ORM\ManyToMany(targetEntity=Application::class, mappedBy="endpoints")
+     */
+    private $applications;
+
+    /**
+     * @Groups({"read", "write"})
+     * @ORM\OneToOne(targetEntity=Subscriber::class, mappedBy="endpoint", cascade={"persist", "remove"})
+     * @MaxDepth(1)
+     */
+    private ?Subscriber $subscriber;
+
     public function __construct()
     {
         $this->requestLogs = new ArrayCollection();
         $this->handlers = new ArrayCollection();
+        $this->applications = new ArrayCollection();
     }
 
     public function getId(): ?UuidInterface
@@ -173,17 +182,17 @@ class Endpoint
         return $this;
     }
 
-    public function getType(): ?string
-    {
-        return $this->type;
-    }
+    // public function getType(): ?string
+    // {
+    //     return $this->type;
+    // }
 
-    public function setType(string $type): self
-    {
-        $this->type = $type;
+    // public function setType(string $type): self
+    // {
+    //     $this->type = $type;
 
-        return $this;
-    }
+    //     return $this;
+    // }
 
     public function getPath(): ?string
     {
@@ -193,18 +202,6 @@ class Endpoint
     public function setPath(string $path): self
     {
         $this->path = $path;
-
-        return $this;
-    }
-
-    public function getApplication(): ?Application
-    {
-        return $this->application;
-    }
-
-    public function setApplication(?Application $application): self
-    {
-        $this->application = $application;
 
         return $this;
     }
@@ -277,6 +274,55 @@ class Endpoint
                 $handler->setObject(null);
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Application[]
+     */
+    public function getApplications(): Collection
+    {
+        return $this->applications;
+    }
+
+    public function addApplication(Application $application): self
+    {
+        if (!$this->applications->contains($application)) {
+            $this->applications[] = $application;
+            $application->addEndpoint($this);
+        }
+
+        return $this;
+    }
+
+    public function removeApplication(Application $application): self
+    {
+        if ($this->applications->removeElement($application)) {
+            $application->removeEndpoint($this);
+        }
+
+        return $this;
+    }
+
+    public function getSubscriber(): ?Subscriber
+    {
+        return $this->subscriber;
+    }
+
+    public function setSubscriber(?Subscriber $subscriber): self
+    {
+        // unset the owning side of the relation if necessary
+        if ($subscriber === null && $this->subscriber !== null) {
+            $this->subscriber->setEndpoint(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($subscriber !== null && $subscriber->getEndpoint() !== $this) {
+            $subscriber->setEndpoint($this);
+        }
+
+        $this->subscriber = $subscriber;
 
         return $this;
     }
