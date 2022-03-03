@@ -9,6 +9,7 @@ use App\Entity\Handler;
 use App\Entity\ObjectEntity;
 use App\Exception\GatewayException;
 use Doctrine\ORM\EntityManagerInterface;
+use phpDocumentor\Reflection\DocBlock\Tags\Var_;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -85,6 +86,17 @@ class HandlerService
         $session = new Session();
         $session->set('endpoint', $endpoint);
 
+        // @TODO FIX ENTITY.ENDPOINT / ENDPOINT.ENTITY
+        // Form.io components array
+        // if ($this->getRequestType('accept') === 'form.io' && $endpoint->getEntity() !== null && $endpoint->getEntity()->getAttributes() !== null) {
+        //   return new Response(
+        //       $this->serializer->serialize($this->formIOService->createFormIOArray($endpoint->getEntity()), 'json'),
+        //       Response::HTTP_OK,
+        //       ['content-type' => 'json']
+        //   );
+        // }
+
+
         // @todo creat logicdata, generalvaribales uit de translationservice
 
         foreach ($endpoint->getHandlers() as $handler) {
@@ -110,15 +122,6 @@ class HandlerService
     public function handleHandler(Handler $handler): Response
     {
         $method = $this->request->getMethod();
-
-        // Form.io components array
-        if ($method === 'GET' && $this->getRequestType('accept') === 'form.io' && $handler->getEntity() && $handler->getEntity()->getAttributes()) {
-            return new Response(
-                $this->serializer->serialize($this->formIOService->createFormIOArray($handler->getEntity()), 'json'),
-                Response::HTTP_OK,
-                ['content-type' => 'json']
-            );
-        }
 
         // Only do mapping and translation -in for calls with body
         if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
