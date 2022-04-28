@@ -35,10 +35,7 @@ class LogService
      */
     public function saveLog(Request $request, Response $response = null, string $content = null, bool $finalSave = null, string $type = 'in'): Log
     {
-        $logRepo = $this->entityManager->getRepository('App:Log');
-
-        $this->session->get('callId') !== null && $type == 'in' ? $existingLog = $logRepo->findOneBy(['callId' => $this->session->get('callId'), 'type' => $type]) : $existingLog = null;
-
+        $existingLog = $this->getLog($response);
         $existingLog ? $callLog = $existingLog : $callLog = new Log();
 
         $callLog->setType($type);
@@ -49,13 +46,12 @@ class LogService
         $callLog->setRequestLanguages($request->getLanguages() ?? null);
         $callLog->setRequestServer($request->server->all());
         $callLog->setRequestContent($request->getContent());
-        $response && $callLog->setResponseStatus($this->getStatusWithCode($response->getStatusCode()));
-        $response && $callLog->setResponseStatusCode($response->getStatusCode());
-        $response && $callLog->setResponseHeaders($response->headers->all());
+
+        $response && $callLog = $this->updateLogResponse($response, $callLog, false);
 
         if ($content) {
             $callLog->setResponseContent($content);
-        // @todo Cant set response content if content is pdf
+            // @todo Cant set response content if content is pdf
         } elseif ($response && !(is_string($response->getContent()) && strpos($response->getContent(), 'PDF'))) {
             $callLog->setResponseContent($response->getContent());
         }
@@ -91,13 +87,13 @@ class LogService
             $callLog->setHandler(!empty($handler) ? $handler : null);
 
             // remove before setting the session values
-//            if ($finalSave === true) {
-//                $this->session->remove('callId');
-//                $this->session->remove('endpoint');
-//                $this->session->remove('entity');
-//                $this->session->remove('source');
-//                $this->session->remove('handler');
-//            }
+            //            if ($finalSave === true) {
+            //                $this->session->remove('callId');
+            //                $this->session->remove('endpoint');
+            //                $this->session->remove('entity');
+            //                $this->session->remove('source');
+            //                $this->session->remove('handler');
+            //            }
 
             // Set session values without relations we already know
             // $sessionValues = $this->session->all();
@@ -114,6 +110,40 @@ class LogService
         $this->entityManager->flush();
 
         return $callLog;
+    }
+
+    private function getLog($type = null)
+    {
+
+        $logRepo = $this->entityManager->getRepository('App:Log');
+
+        if ($this->session->get('callId') !== null) {
+            if (isset($type) && $type !== 'in') {
+                return null;
+            }
+
+            return $logRepo->findOneBy(['callId' => $this->session->get('callId'), 'type' => $type]);
+        }
+
+        return null;
+    }
+
+    public function updateLogResponse(Response $response, Log $log = null, bool $persist = false, $test = false)
+    {
+        !$log && $log = $this->getLog($response);
+
+        $log->setResponseStatus($this->getStatusWithCode($response->getStatusCode()));
+        $test ?
+            $log->setResponseStatusCode(1234) :
+            $log->setResponseStatusCode($response->getStatusCode());
+        $log->setResponseHeaders($response->headers->all());
+
+        if ($persist) {
+            $this->entityManager->persist($log);
+            $this->entityManager->flush();
+        } else {
+            return $log;
+        }
     }
 
     public function makeRequest(): Request
