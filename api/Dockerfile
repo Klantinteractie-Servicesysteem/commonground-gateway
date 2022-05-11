@@ -52,7 +52,7 @@ RUN set -eux; \
 	)"; \
 	apk add --no-cache --virtual .api-phpexts-rundeps $runDeps; \
 	\
-	apk del .build-deps
+	apk del .build-deps;
 
 RUN apk add --no-cache \
 		acl \
@@ -80,10 +80,11 @@ WORKDIR /srv/api
 ARG APP_ENV=prod
 
 # prevent the reinstallation of vendors at every changes in the source code
-COPY composer.json composer.lock symfony.lock ./
+COPY composer.json ./
 
 RUN set -eux; \
 	composer install --prefer-dist --no-dev --no-scripts --no-progress --no-suggest --no-scripts; \
+	composer update --prefer-dist --no-dev --no-scripts --no-progress --no-suggest --no-scripts; \
 	composer clear-cache
 
 # copy only specifically what we need
