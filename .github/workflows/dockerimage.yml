@@ -85,6 +85,7 @@ jobs:
       #  run: sleep 20
       #- name: Database Check
       #  run: docker-compose exec -T php bin/console doctrine:schema:validate
+      #this is only a check of a lock file against a vulnerability index, we should add DAST/SAST scanning checks like snyk
       - name: Security Checks
         run: |
           curl -L -sS --output local-php-security-checker https://github.com/fabpot/local-php-security-checker/releases/download/v2.0.3/local-php-security-checker_2.0.3_linux_amd64

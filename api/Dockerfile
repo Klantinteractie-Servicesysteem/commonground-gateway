@@ -80,7 +80,8 @@ WORKDIR /srv/api
 ARG APP_ENV=prod
 
 # prevent the reinstallation of vendors at every changes in the source code
-COPY composer.json composer.lock symfony.lock ./
+#pascal: copy after running the update command, we always want the latest version, so the secuity check in the dockerimage.yml is valid
+#COPY composer.json composer.lock symfony.lock ./
 
 RUN set -eux; \
 	composer install --prefer-dist --no-dev --no-scripts --no-progress --no-suggest --no-scripts; \
@@ -88,6 +89,7 @@ RUN set -eux; \
 	composer clear-cache
 
 # copy only specifically what we need
+COPY composer.json composer.lock symfony.lock ./
 COPY .env ./
 COPY bin bin/
 COPY config config/
