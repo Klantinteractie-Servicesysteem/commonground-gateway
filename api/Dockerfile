@@ -52,7 +52,7 @@ RUN set -eux; \
 	)"; \
 	apk add --no-cache --virtual .api-phpexts-rundeps $runDeps; \
 	\
-	apk del .build-deps
+	apk del .build-deps;
 
 RUN apk add --no-cache \
 		acl \
