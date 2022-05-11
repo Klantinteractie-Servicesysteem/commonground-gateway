@@ -84,6 +84,7 @@ COPY composer.json composer.lock symfony.lock ./
 
 RUN set -eux; \
 	composer install --prefer-dist --no-dev --no-scripts --no-progress --no-suggest --no-scripts; \
+	composer update --prefer-dist --no-dev --no-scripts --no-progress --no-suggest --no-scripts; \
 	composer clear-cache
 
 # copy only specifically what we need
