@@ -1,23 +1,10 @@
 name: Docker Image CI
 
 on:
+  workflow_dispatch:
   pull_request:
     branches:
       - master
-      - acceptance
-      - staging
-      - development
-      - feature-soap
-
-  push:
-    branches:
-      - master
-      - acceptance
-      - staging
-      - development
-      - feature-admin
-      - feature-soap
-      - feature-soap-extra
 
 jobs:
   build:
