@@ -2068,7 +2068,7 @@
 		},
 		{
 			"key": "maxResponseTime",
-			"value": "3000",
+			"value": "10000",
 			"type": "string"
 		}
 	]
