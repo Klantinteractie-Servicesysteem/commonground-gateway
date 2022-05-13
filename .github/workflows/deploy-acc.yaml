@@ -17,8 +17,8 @@ jobs:
             - name: Set kubeconfig
               id: kubeconfig
               run: |
-                  if [ "${{ secrets.KISS_DEV_KUBECONFIG }}" != "" ]; then
-                    printf "${{ secrets.KISS_DEV_KUBECONFIG }}" > kubeconfig.yaml
+                  if [ "${{ secrets.KISS_ACC_KUBECONFIG }}" != "" ]; then
+                    printf "${{ secrets.KISS_ACC_KUBECONFIG }}" > kubeconfig.yaml
                     echo "##[set-output name=success]true"
                   else
                     echo "##[set-output name=success]false"
