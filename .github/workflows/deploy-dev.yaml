@@ -13,7 +13,7 @@ jobs:
 
         steps:
             - name: Add helm repository to helm
-              run: helm repo add kiss-gateway https://raw.githubusercontent.com/Klantinteractie-Servicesysteem/commonground-gateway/main/helm
+              run: helm repo add kiss-gateway https://raw.githubusercontent.com/Klantinteractie-Servicesysteem/commonground-gateway/main/api/helm
             - name: Set kubeconfig
               id: kubeconfig
               run: |
@@ -25,10 +25,10 @@ jobs:
                   fi
             - name: Upgrade helm installation
               if: steps.kubeconfig.outputs.success == 'true' && success()
-              run: helm upgrade --install commonground-gateway kiss-frontend/commonground-gateway --reuse-values --kubeconfig="kubeconfig.yaml" --namespace=frontend --description https://raw.githubusercontent.com/Klantinteractie-Servicesysteem/commonground-gateway/main/helm
+              run: helm upgrade --install commonground-gateway kiss-frontend/commonground-gateway --reuse-values --kubeconfig="kubeconfig.yaml" --namespace=gateway --description https://raw.githubusercontent.com/Klantinteractie-Servicesysteem/commonground-gateway/main/helm
             - name: Rollout new containers
               if: steps.kubeconfig.outputs.success == 'true' && success()
-              run: kubectl rollout restart deployment/kiss-frontend --kubeconfig="kubeconfig.yaml"  --namespace=frontend
+              run: kubectl rollout restart deployment/commonground-gateway --kubeconfig="kubeconfig.yaml"  --namespace=gateway
             - name: Cleanup
               run: |
                   helm repo remove kiss-frontend
