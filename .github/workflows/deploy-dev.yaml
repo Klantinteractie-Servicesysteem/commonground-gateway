@@ -25,7 +25,7 @@ jobs:
                   fi
             - name: Upgrade helm installation
               if: steps.kubeconfig.outputs.success == 'true' && success()
-              run: helm upgrade --install commonground-gateway kiss-frontend/commonground-gateway --reuse-values --kubeconfig="kubeconfig.yaml" --namespace=gateway --description https://raw.githubusercontent.com/Klantinteractie-Servicesysteem/commonground-gateway/main/helm
+              run: helm upgrade --install commonground-gateway kiss-gateway/commonground-gateway --reuse-values --kubeconfig="kubeconfig.yaml" --namespace=gateway --description https://raw.githubusercontent.com/Klantinteractie-Servicesysteem/commonground-gateway/main/api/helm
             - name: Rollout new containers
               if: steps.kubeconfig.outputs.success == 'true' && success()
               run: kubectl rollout restart deployment/commonground-gateway --kubeconfig="kubeconfig.yaml"  --namespace=gateway
