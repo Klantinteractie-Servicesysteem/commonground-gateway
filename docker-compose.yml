@@ -17,15 +17,13 @@ services:
   #    ports:
   #      - "83:80"
   
-  oc:
+  kiss:
     &ui
-    image: ghcr.io/opencatalogi/web-app:dev
+    image: ghcr.io/klantinteractie-servicesysteem/kiss-frontend:dev
     depends_on:
       - api
     ports:
       - "81:80"
-    volumes:
-      - ./ui/oc.js:/usr/share/nginx/html/env.js:rw,cached 
         
   cron:
     &cron
@@ -42,7 +40,7 @@ services:
       - "8000:80"
     volumes:
       - ./ui/env.js:/usr/share/nginx/html/env.js:rw,cached
-      - 
+      
   php:
     &php
     image: ${CONTAINER_REGISTRY_BASE}/${CONTAINER_PROJECT_NAME}-php:${APP_ENV}

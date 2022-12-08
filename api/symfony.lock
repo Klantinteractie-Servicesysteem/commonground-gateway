@@ -248,6 +248,9 @@
     "khanamiryan/qrcode-detector-decoder": {
         "version": "1.0.6"
     },
+    "klantinteractie-servicesysteem/kiss-bundle": {
+        "version": "0.0.1"
+    },
     "knplabs/knp-markdown-bundle": {
         "version": "1.9.0"
     },
@@ -308,9 +311,6 @@
     },
     "onelogin/php-saml": {
         "version": "4.0.0"
-    },
-    "open-catalogi/open-catalogi-bundle": {
-        "version": "dev-main"
     },
     "paragonie/random_compat": {
         "version": "v9.99.100"
