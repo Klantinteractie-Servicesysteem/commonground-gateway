@@ -178,7 +178,23 @@ class Gateway
      * @Groups({"read","read_secure","write"})
      * @ORM\Column(type="string", length=255)
      */
-    private string $name;
+    private string $name = '';
+
+    /**
+     * @var string The description of the Gateway which is used in the commonGround service
+     *
+     * @ApiProperty(
+     *     attributes={
+     *         "openapi_context"={
+     *             "type"="string",
+     *             "example"="arc"
+     *         }
+     *     }
+     * )
+     * @Groups({"read","read_secure","write"})
+     * @ORM\Column(type="text", nullable=true)
+     */
+    private ?string $description = '';
 
     /**
      * @var string The location where the Gateway needs to be accessed
@@ -631,6 +647,11 @@ class Gateway
      */
     private bool $test = false;
 
+    /**
+     * @ORM\OneToMany(targetEntity=Endpoint::class, mappedBy="proxy")
+     */
+    private $proxies;
+
     public function __construct()
     {
         $this->responceLogs = new ArrayCollection();
@@ -639,6 +660,7 @@ class Gateway
         $this->subscribers = new ArrayCollection();
         $this->synchronizations = new ArrayCollection();
         $this->callLogs = new ArrayCollection();
+        $this->proxies = new ArrayCollection();
     }
 
     public function export(): ?array
@@ -698,6 +720,18 @@ class Gateway
     public function setName(string $name): self
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): self
+    {
+        $this->description = $description;
 
         return $this;
     }
@@ -1197,6 +1231,36 @@ class Gateway
     public function setTest(?bool $test): self
     {
         $this->test = $test;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Endpoint[]
+     */
+    public function getProxies(): Collection
+    {
+        return $this->proxies;
+    }
+
+    public function addProxy(Endpoint $proxy): self
+    {
+        if (!$this->proxies->contains($proxy)) {
+            $this->proxies[] = $proxy;
+            $proxy->setProxy($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProxy(Endpoint $proxy): self
+    {
+        if ($this->proxies->removeElement($proxy)) {
+            // set the owning side to null (unless already changed)
+            if ($proxy->getProxy() === $this) {
+                $proxy->setProxy(null);
+            }
+        }
 
         return $this;
     }

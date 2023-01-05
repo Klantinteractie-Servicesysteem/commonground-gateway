@@ -50,11 +50,14 @@ spec:
             {{ end }}
             defaultMode: 420
         {{- end }}
+        - name: vendor
+          persistentVolumeClaim:
+              claimName: {{ include "commonground-gateway.fullname" . }}-vendor
 
       containers:
         - name: {{ include "commonground-gateway.fullname" . }}-worker
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- toYaml .Values.securityContextPhp | nindent 12 }}
           image: "{{ .Values.php.repository }}:{{ .Values.php.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.php.pullPolicy }}
           ports:
@@ -71,7 +74,23 @@ spec:
             - mountPath: /var/run/idp
               name: idp-certificate
               readOnly: true
-            {{- end }}
+            {{- end }}            
+            - mountPath: /srv/api/vendor
+              subPath: vendor
+              name: vendor
+              readOnly: false
+            - mountPath: /srv/api/composer.json
+              subPath: composer.json
+              name: vendor
+              readOnly: false
+            - mountPath: /srv/api/composer.lock
+              subPath: composer.lock
+              name: vendor
+              readOnly: false
+            - mountPath: /srv/api/symfony.lock
+              subPath: symfony.lock
+              name: vendor
+              readOnly: false
           args:
               - bin/console
               - messenger:consume
@@ -263,6 +282,10 @@ spec:
                   key: digid-privatekey
                   name: {{ include "commonground-gateway.fullname" . }}
             {{- end }}
+            {{- end }}
+            {{- if .Values.config.httpsProxy }}
+            -   name: HTTPS_PROXY
+                value: {{ .Values.config.httpsProxy }}
             {{- end }}
 
           resources:

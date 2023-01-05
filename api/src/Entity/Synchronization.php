@@ -108,9 +108,9 @@ class Synchronization
      * @var string The id of object in the related source
      *
      * @Groups({"read","write"})
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
-    private string $sourceId;
+    private ?string $sourceId = null;
 
     /**
      * @var ?string The hash of this resource
@@ -171,18 +171,28 @@ class Synchronization
     private ?DateTimeInterface $dateModified;
 
     /**
-     * The amount of times that we have tried to sync this item, counted by the amount of times it has been "touched"
+     * The amount of times that we have tried to sync this item, counted by the amount of times it has been "touched".
      *
      * @ORM\Column(type="integer", options={"default" : 1})
      */
     private $tryCounter = 0;
 
     /**
-     * An updated timer that tels the sync service to wait a specific increment beofre trying again
+     * An updated timer that tels the sync service to wait a specific increment beofre trying again.
      *
-     * @ORM\Column(type="datetime", options={"default" : "CURRENT_TIMESTAMP"})
+     * @ORM\Column(type="datetime", nullable=true, options={"default" : "CURRENT_TIMESTAMP"})
      */
     private $dontSyncBefore;
+
+    public function __construct(?Source $source = null, ?Entity $entity = null)
+    {
+        if (isset($source)) {
+            $this->gateway = $source;
+        }
+        if (isset($entity)) {
+            $this->entity = $entity;
+        }
+    }
 
     public function getId(): ?UuidInterface
     {
@@ -227,9 +237,19 @@ class Synchronization
         return $this;
     }
 
+    public function getGateway(): ?Source
+    {
+        return $this->getSource();
+    }
+
     public function getSource(): ?Source
     {
         return $this->gateway;
+    }
+
+    public function setGateway(?Source $source): self
+    {
+        return $this->setSource($source);
     }
 
     public function setSource(?Source $source): self
@@ -388,7 +408,7 @@ class Synchronization
     public function prePersist(): void
     {
         // If we have ten trys or more we want to block the sync
-        if($this->tryCounter >= 10){
+        if ($this->tryCounter >= 10) {
             $this->blocked = true;
         }
     }

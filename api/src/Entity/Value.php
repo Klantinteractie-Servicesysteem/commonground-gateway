@@ -26,6 +26,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * A value for a given attribute on an Object Entity.
  *
  * @category Entity
+ * @ORM\HasLifecycleCallbacks()
  *
  * @ApiResource(
  *  normalizationContext={"groups"={"read"}, "enable_max_depth"=true},
@@ -229,9 +230,11 @@ class Value
 
     public function setStringValue($stringValue): self
     {
-        //@todo this is a hack
+        //@We no longer use string value?
         if (is_array($stringValue)) {
-            $stringValue = implode(',', $stringValue);
+            return $this;
+        } elseif ($stringValue instanceof ObjectEntity) {
+            $stringValue = $stringValue->getId()->toString();
         }
         $this->stringValue = $stringValue;
 
@@ -539,11 +542,11 @@ class Value
 
     /**
      * @param $value The value to set
-     * @param bool $unsave Wheter the setter can also remove values
+     * @param bool $unsafe Wheter the setter can also remove values
      *
      * @throws Exception
      */
-    public function setValue($value, bool $unsave = false): self
+    public function setValue($value, bool $unsafe = false, ?DateTimeInterface $dateModified = null): self
     {
         if ($this->getAttribute()) {
 
@@ -553,8 +556,9 @@ class Value
                 return $this->setSimpleArrayValue($value);
             } elseif ($this->getAttribute()->getMultiple()) {
                 // Lest deal with multiple file subobjects
-
-                $this->objects->clear();
+                if ($unsafe) {
+                    $this->objects->clear();
+                }
 
                 if (!$value) {
                     return $this;
@@ -570,20 +574,22 @@ class Value
                         $valueObject->setOwner($this->getObjectEntity()->getOwner());
                         $valueObject->setApplication($this->getObjectEntity()->getApplication());
                         $valueObject->setOrganization($this->getObjectEntity()->getOrganization());
-                        $valueObject->hydrate($value, $unsave);
+                        $valueObject->hydrate($value, $unsafe, $dateModified);
                         $value = $valueObject;
                     }
 
-                    if (is_string($value) || $value == null) {
+                    if (is_string($value)) {
+                        $idArray[] = $value;
+                    } elseif ($value == null) {
                         continue;
+                    } else {
+                        $this->addObject($value);
                     }
-
-                    $idArray[] = $value->getId();
-                    $this->addObject($value);
                 }
 
                 // Set a string reprecentation of the object
                 $this->stringValue = ','.implode(',', $idArray);
+                $this->setArrayValue($idArray);
 
                 return $this;
             }
@@ -633,29 +639,34 @@ class Value
                     // Catch empty input
                     if ($value === null) {
                         return $this;
+                    } elseif (is_string($value)) {
+                        return $this->setStringValue($value);
                     }
 
                     // Catch Array input (for hydrator)
-                    if (is_array($value)) {
+                    if (is_array($value) && $this->getAttribute()->getObject()) {
                         $valueObject = new ObjectEntity($this->getAttribute()->getObject());
                         $valueObject->setOwner($this->getObjectEntity()->getOwner());
                         $valueObject->setApplication($this->getObjectEntity()->getApplication());
                         $valueObject->setOrganization($this->getObjectEntity()->getOrganization());
-                        $valueObject->hydrate($value);
+                        $valueObject->hydrate($value, $unsafe, $dateModified);
                         $value = $valueObject;
+                    } elseif (is_array($value)) {
+                        return $this;
                     }
 
                     $this->objects->clear();
 
                     // Set a string reprecentation of the object
-                    $this->stringValue = $value->getId();
+                    // var_dump('schema: '.$this->getObjectEntity()->getEntity()->getName());
+                    $value->getId() && $this->stringValue = $value->getId()->toString();
 
                     return $this->addObject($value);
 
                 case 'array':
                     return $this->setArrayValue($value);
                 default:
-                    throw new \UnexpectedValueException('Could not create a value for the attribute type of: '.$this->getAttribute()->getType());
+                    throw new \UnexpectedValueException($this->getAttribute()->getEntity()->getName().$this->getAttribute()->getName().': Could not create a value for the attribute type of: '.$this->getAttribute()->getType());
             }
         } else {
             //TODO: correct error handling

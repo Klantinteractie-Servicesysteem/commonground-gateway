@@ -110,14 +110,14 @@ class Entity
      * @Groups({"read","write"})
      * @ORM\Column(type="string", length=255, nullable=true)
      */
-    private $endpoint;
+    private $endpoint = '';
 
     /**
      * @Groups({"read","write"})
      * @ORM\OneToOne(targetEntity=Soap::class, fetch="EAGER", mappedBy="fromEntity")
      * @MaxDepth(1)
      */
-    private ?soap $toSoap;
+    private ?Soap $toSoap = null;
 
     /**
      * @ORM\OneToMany(targetEntity=Soap::class, mappedBy="toEntity", orphanRemoval=true)
@@ -144,7 +144,7 @@ class Entity
      * @Groups({"read","write"})
      * @ORM\Column(type="text", nullable=true)
      */
-    private $description;
+    private $description = '';
 
     /**
      * @var string The function of this Entity. This is used for making specific entity types/functions work differently
@@ -153,7 +153,7 @@ class Entity
      *
      * @Assert\Choice({"noFunction","organization", "person", "user", "userGroup", "processingLog"})
      * @Groups({"read", "write"})
-     * @ORM\Column(type="string", options={"default":"noFunction"})
+     * @ORM\Column(type="string", options={"default":"noFunction"}, name="function_column")
      */
     private string $function = 'noFunction';
 
@@ -226,7 +226,7 @@ class Entity
      * @Groups({"read", "write"})
      * @ORM\Column(type="array", nullable=true)
      */
-    private ?array $availableProperties;
+    private ?array $availableProperties = [];
 
     /**
      * @var array|null The properties used for this entity (for all CRUD calls) if null all properties will be used. This affects which properties will be written / shown.
@@ -234,7 +234,7 @@ class Entity
      * @Groups({"read", "write"})
      * @ORM\Column(type="array", nullable=true)
      */
-    private ?array $usedProperties;
+    private ?array $usedProperties = [];
 
     /**
      * @ORM\OneToMany(targetEntity=GatewayResponseLog::class, mappedBy="entity", fetch="EXTRA_LAZY")
@@ -315,9 +315,10 @@ class Entity
     /**
      * @var ?Collection The collections of this Entity
      *
-     * @Groups({"write"})
+     * @Groups({"write", "read"})
      * @MaxDepth(1)
-     * @ORM\ManyToMany(targetEntity=CollectionEntity::class, mappedBy="entities", fetch="EXTRA_LAZY")
+     * @ORM\ManyToMany(targetEntity=CollectionEntity::class, mappedBy="entities")
+     * @ORM\OrderBy({"dateCreated" = "DESC"})
      */
     private ?Collection $collections;
 
@@ -325,7 +326,7 @@ class Entity
      * @var ?string The uri to a schema.org object
      *
      * @Groups({"read", "write"})
-     * @ORM\Column(type="string", length=255, nullable=true, options={"default":null})
+     * @ORM\Column(type="string", length=255, nullable=true, options={"default":null}, name="schema_column")
      */
     private ?string $schema = null;
 
@@ -356,6 +357,14 @@ class Entity
     private ?array $nameProperties = null;
 
     /**
+     * @var int The maximum depth that should be used when casting objects of this entity to array
+     *
+     * @Groups({"read", "write"})
+     * @ORM\Column(type="integer", length=1, options={"default": 3})
+     */
+    private int $maxDepth = 3;
+
+    /**
      * @Groups({"read", "write"})
      * @ORM\Column(type="string", length=255, nullable=true)
      */
@@ -372,6 +381,14 @@ class Entity
      * @ORM\ManyToMany(targetEntity=Endpoint::class, mappedBy="entities")
      */
     private $endpoints;
+
+    /**
+     * @var bool Whether the entity should be excluded from rendering as sub object
+     * @Groups({"read", "write"})
+     *
+     * @ORM\Column(type="boolean", options={"default": false}, nullable=true)
+     */
+    private bool $exclude = false;
 
     public function __construct()
     {
@@ -458,7 +475,7 @@ class Entity
         return $this->endpoint;
     }
 
-    public function setEndpoint(string $endpoint): self
+    public function setEndpoint(?string $endpoint): self
     {
         $this->endpoint = $endpoint;
 
@@ -1130,7 +1147,6 @@ class Entity
                 $attribute = new Attribute();
                 $attribute->setName($name);
             }
-
             $this->addAttribute($attribute->fromSchema($property));
         }
 
@@ -1247,6 +1263,18 @@ class Entity
         return $this;
     }
 
+    public function getMaxDepth(): int
+    {
+        return $this->maxDepth;
+    }
+
+    public function setMaxDepth(int $maxDepth): self
+    {
+        $this->maxDepth = $maxDepth;
+
+        return $this;
+    }
+
     /**
      * @return Collection|Endpoint[]
      */
@@ -1270,6 +1298,26 @@ class Entity
         if ($this->endpoints->removeElement($endpoint)) {
             $endpoint->removeEntity($this);
         }
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isExcluded(): bool
+    {
+        return $this->exclude;
+    }
+
+    /**
+     * @param bool $exclude
+     *
+     * @return Entity
+     */
+    public function setExclude(bool $exclude): self
+    {
+        $this->exclude = $exclude;
 
         return $this;
     }
